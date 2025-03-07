@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useState, ReactNode } from "react";
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from "react";
 
 type FunctionType = {
   id: string;
@@ -9,7 +9,14 @@ type FunctionType = {
 // Definir las acciones posibles
 type FunctionAction =
   | { type: "ADD"; payload: FunctionType }
-  | { type: "DELETE"; payload: string };
+  | { type: "DELETE"; payload: string }
+  | {
+    type: "UPDATE"; payload: {
+      id: string;
+      name: string;
+    }
+  }
+  | { type: "LOAD"; payload: FunctionType[] }
 
 type FunctionContextType = {
   functions: FunctionType[];
@@ -22,6 +29,11 @@ const functionReducer = (state: FunctionType[], action: FunctionAction) => {
       return [...state, action.payload]; // Agregamos nueva función
     case "DELETE":
       return state.filter((func) => func.id !== action.payload); // Filtramos y eliminamos la función
+    case "UPDATE":
+      const { id, name } = action.payload;
+      return state.map((func) => func.id === id ? { ...func, name: name } : func);
+    case "LOAD":
+      return action.payload;
     default:
       return state;
   }
@@ -31,7 +43,20 @@ export const FunctionContext = createContext<FunctionContextType | undefined>(un
 
 export const FunctionProvider = ({ children }: { children: ReactNode }) => {
 
-  const [functions, dispatch] = useReducer(functionReducer, []); // sustituimos useState por useReducer
+  const [functions, dispatch] = useReducer(functionReducer, []);
+
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/users") // Simulamos que los usuarios son funciones
+      .then((response) => response.json())
+      .then((data) => dispatch({
+        type: "LOAD",
+        payload: data.map((user: any) => ({
+          id: user.id.toString(),
+            name: user.name,
+              permission: ["READ"],
+        }))
+      }));
+  }, []);
 
   return (
     <FunctionContext.Provider value={{ functions, dispatch }}>

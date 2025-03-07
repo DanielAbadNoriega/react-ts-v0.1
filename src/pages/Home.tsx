@@ -3,6 +3,16 @@ import { useFunctionContext } from "../context/FunctionContext";
 const Home = () => {
   const { functions, dispatch } = useFunctionContext();
 
+  function updateName(e: React.ChangeEvent<HTMLInputElement>, id: string) {
+    dispatch({
+      type: "UPDATE",
+      payload: {
+        id: id,
+        name: e.target.value
+      }
+    })
+  }
+
   return (
     <div>
       <h1>Funciones</h1>
@@ -17,7 +27,16 @@ const Home = () => {
       <ul>
         {functions.map((func) => (
           <li key={func.id}>
-            {func.name}{" "}
+            <p>{func.name}</p><br />
+
+            <input
+              type="text"
+              value={func.name}
+              onChange={(e) => updateName(e, func.id)} />
+
+
+            <br></br>
+
             <button onClick={() =>
               dispatch({
                 type: "DELETE",
