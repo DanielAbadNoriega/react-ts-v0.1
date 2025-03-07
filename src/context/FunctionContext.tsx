@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useReducer, useState, ReactNode } from "react";
 
 type FunctionType = {
   id: string;
@@ -6,22 +6,35 @@ type FunctionType = {
   permission: string[];
 };
 
+// Definir las acciones posibles
+type FunctionAction =
+  | { type: "ADD"; payload: FunctionType }
+  | { type: "DELETE"; payload: string };
+
 type FunctionContextType = {
   functions: FunctionType[];
-  addFunction: (newFunc: FunctionType) => void;
+  dispatch: React.Dispatch<FunctionAction>;
 };
 
-const FunctionContext = createContext<FunctionContextType | undefined>(undefined);
+const functionReducer = (state: FunctionType[], action: FunctionAction) => {
+  switch (action.type) {
+    case "ADD":
+      return [...state, action.payload]; // Agregamos nueva función
+    case "DELETE":
+      return state.filter((func) => func.id !== action.payload); // Filtramos y eliminamos la función
+    default:
+      return state;
+  }
+}
+
+export const FunctionContext = createContext<FunctionContextType | undefined>(undefined);
 
 export const FunctionProvider = ({ children }: { children: ReactNode }) => {
-  const [functions, setFunctions] = useState<FunctionType[]>([]);
 
-  const addFunction = (newFunc: FunctionType) => {
-    setFunctions((prev) => [...prev, newFunc]);
-  };
+  const [functions, dispatch] = useReducer(functionReducer, []); // sustituimos useState por useReducer
 
   return (
-    <FunctionContext.Provider value={{ functions, addFunction }}>
+    <FunctionContext.Provider value={{ functions, dispatch }}>
       {children}
     </FunctionContext.Provider>
   );
